@@ -1,2 +1,2 @@
 # AergiaFirmware
-Aergia Device Firmware
+Aergia Devices Firmware
