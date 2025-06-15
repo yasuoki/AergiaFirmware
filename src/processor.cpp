@@ -128,7 +128,6 @@ void Processor::onLoop(uint32_t now) {}
 void Processor::onLoad(ControlId from, uint32_t now, const uint8_t *data, size_t size) {}
 void Processor::onUsbMount(ControlId from, uint32_t now) {}
 void Processor::onUsbUnmount(ControlId from, uint32_t now) {}
-void Processor::onTimer(ControlId from, uint32_t now, const uint8_t *data, size_t size) {}
 void Processor::onSerialConnect(ControlId from, uint32_t now) {}
 void Processor::onSerialDisconnect(ControlId from, uint32_t now) {}
 

@@ -9,6 +9,13 @@
 #include "processor.h"
 #include "config_loader.h"
 
+#define TIMER_SOURCE_COUNT	24
+
+typedef struct _TimerData {
+	uint32_t	timeout;
+	int16_t 	data;
+} TimerData;
+
 class KMProcessor : public Processor {
 private:
 	static Configuration *	_config;
@@ -20,29 +27,8 @@ private:
 	static bool 	_mouseTracking;
 	static int32_t 	_mouseTrackDistanceX;
 	static int32_t 	_mouseTrackDistanceY;
-
-	static int16_t _keySwitch0_tmv;
-	static int16_t _keySwitch1_tmv;
-	static int16_t _keySwitch2_tmv;
-	static int16_t _keySwitch3_tmv;
-	static int16_t _keySwitch4_tmv;
-	static int16_t _keySwitch5_tmv;
-	static int16_t _keySwitch6_tmv;
-	static int16_t _keySwitch7_tmv;
-	static int16_t _keySwitch8_tmv;
-	static int16_t _keySwitch9_tmv;
-	static int16_t _keySwitch10_tmv;
-	static int16_t _keySwitch11_tmv;
-	static int16_t _keySwitch12_tmv;
-	static int16_t _keySwitch13_tmv;
-	static int16_t _keySwitch14_tmv;
-	static int16_t _keySwitch15_tmv;
-	static int16_t _button0_tmv;
-	static int16_t _button1_tmv;
-	static int16_t _wheel_tmv;
-	static int16_t _display_tmv;
-	static int16_t _ranging_tmv;
-	static int16_t _main_tmv;
+	static uint32_t	_nextTimeout;
+	static TimerData _timerData[TIMER_SOURCE_COUNT];
 
 	void remapApplication();
 	void remapPage();
@@ -58,10 +44,10 @@ private:
 	void doWakeup();
 	void mouseMove(int32_t x, int32_t y);
 
-
 	int intRefeerence(int v);
 	float floatRefeerence(float v);
 	bool compaireKey(float key, uint16_t op, float value);
+	void clearAllTimers();
 
 	void cmdMouseMove(uint32_t now, ControlId control, EventId event, Command *command);
 	void cmdMouseTrackingStart(uint32_t now, ControlId control, EventId event, Command *command);
@@ -81,8 +67,10 @@ private:
 	void cmdPageChange(uint32_t now, ControlId control, EventId event, Command *command);
 	void cmdApplicationChange(uint32_t now, ControlId control, EventId event, Command *command);
 	void cmdDelay(uint32_t now, ControlId control, EventId event, Command *command);
+	void cmdSetTimer(uint32_t now, ControlId control, EventId event, Command *command);
 	void doCommand(uint32_t now, ControlId control, EventId event, Command *command);
 
+	void onTimer(ControlId from, uint32_t now);
 	void eventDispatch(uint32_t now, ControlId control, EventId event);
 
 public:

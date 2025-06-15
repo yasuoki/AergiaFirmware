@@ -73,7 +73,6 @@ public:
 	virtual void onLoad(ControlId from, uint32_t now, const uint8_t *data, size_t size);
 	virtual void onUsbMount(ControlId from, uint32_t now);
 	virtual void onUsbUnmount(ControlId from, uint32_t now);
-	virtual void onTimer(ControlId from, uint32_t now, const uint8_t *data, size_t size);
 	virtual void onSerialConnect(ControlId from, uint32_t now);
 	virtual void onSerialDisconnect(ControlId from, uint32_t now);
 	virtual void onSerial(ControlId from, uint32_t now, const uint8_t *data, size_t size);

@@ -22,32 +22,12 @@ bool KMProcessor::_screenTimeout = false;
 bool KMProcessor::_mouseTracking = false;
 int32_t KMProcessor::_mouseTrackDistanceX = 0;
 int32_t KMProcessor::_mouseTrackDistanceY = 0;
-
-int16_t KMProcessor::_keySwitch0_tmv = 0;
-int16_t KMProcessor::_keySwitch1_tmv = 0;
-int16_t KMProcessor::_keySwitch2_tmv = 0;
-int16_t KMProcessor::_keySwitch3_tmv = 0;
-int16_t KMProcessor::_keySwitch4_tmv = 0;
-int16_t KMProcessor::_keySwitch5_tmv = 0;
-int16_t KMProcessor::_keySwitch6_tmv = 0;
-int16_t KMProcessor::_keySwitch7_tmv = 0;
-int16_t KMProcessor::_keySwitch8_tmv = 0;
-int16_t KMProcessor::_keySwitch9_tmv = 0;
-int16_t KMProcessor::_keySwitch10_tmv = 0;
-int16_t KMProcessor::_keySwitch11_tmv = 0;
-int16_t KMProcessor::_keySwitch12_tmv = 0;
-int16_t KMProcessor::_keySwitch13_tmv = 0;
-int16_t KMProcessor::_keySwitch14_tmv = 0;
-int16_t KMProcessor::_keySwitch15_tmv = 0;
-int16_t KMProcessor::_button0_tmv = 0;
-int16_t KMProcessor::_button1_tmv = 0;
-int16_t KMProcessor::_wheel_tmv = 0;
-int16_t KMProcessor::_display_tmv = 0;
-int16_t KMProcessor::_ranging_tmv = 0;
-int16_t KMProcessor::_main_tmv = 0;
+uint32_t KMProcessor::_nextTimeout = 0;
+TimerData KMProcessor::_timerData[TIMER_SOURCE_COUNT];
 
 KMProcessor::KMProcessor() {
 	ConfigLoader::init();
+	clearAllTimers();
 }
 
 bool KMProcessor::init() {
@@ -182,89 +162,89 @@ int KMProcessor::intRefeerence(int v) {
 			case VariableId::KeySwitch0_Status:
 				return (_currentKeyState & 0x00000001) ? 1: 0;
 			case VariableId::KeySwitch0_TimerData:
-				return _keySwitch0_tmv;
+				return _timerData[ControlId::KeySwitch0&0xff].data;
 			case VariableId::KeySwitch1_Status:
 				return (_currentKeyState & 0x00000002) ? 1: 0;
 			case VariableId::KeySwitch1_TimerData:
-				return _keySwitch1_tmv;
+				return _timerData[ControlId::KeySwitch1&0xff].data;
 			case VariableId::KeySwitch2_Status:
 				return (_currentKeyState & 0x00000004) ? 1: 0;
 			case VariableId::KeySwitch2_TimerData:
-				return _keySwitch2_tmv;
+				return _timerData[ControlId::KeySwitch2&0xff].data;
 			case VariableId::KeySwitch3_Status:
 				return (_currentKeyState & 0x00000008) ? 1: 0;
 			case VariableId::KeySwitch3_TimerData:
-				return _keySwitch3_tmv;
+				return _timerData[ControlId::KeySwitch3&0xff].data;
 			case VariableId::KeySwitch4_Status:
 				return (_currentKeyState & 0x00000010) ? 1: 0;
 			case VariableId::KeySwitch4_TimerData:
-				return _keySwitch4_tmv;
+				return _timerData[ControlId::KeySwitch4&0xff].data;
 			case VariableId::KeySwitch5_Status:
 				return (_currentKeyState & 0x00000020) ? 1: 0;
 			case VariableId::KeySwitch5_TimerData:
-				return _keySwitch5_tmv;
+				return _timerData[ControlId::KeySwitch5&0xff].data;
 			case VariableId::KeySwitch6_Status:
 				return (_currentKeyState & 0x00000040) ? 1: 0;
 			case VariableId::KeySwitch6_TimerData:
-				return _keySwitch6_tmv;
+				return _timerData[ControlId::KeySwitch6&0xff].data;
 			case VariableId::KeySwitch7_Status:
 				return (_currentKeyState & 0x00000080) ? 1: 0;
 			case VariableId::KeySwitch7_TimerData:
-				return _keySwitch7_tmv;
+				return _timerData[ControlId::KeySwitch7&0xff].data;
 			case VariableId::KeySwitch8_Status:
 				return (_currentKeyState & 0x00000100) ? 1: 0;
 			case VariableId::KeySwitch8_TimerData:
-				return _keySwitch8_tmv;
+				return _timerData[ControlId::KeySwitch8&0xff].data;
 			case VariableId::KeySwitch9_Status:
 				return (_currentKeyState & 0x00000200) ? 1: 0;
 			case VariableId::KeySwitch9_TimerData:
-				return _keySwitch9_tmv;
+				return _timerData[ControlId::KeySwitch9&0xff].data;
 			case VariableId::KeySwitch10_Status:
 				return (_currentKeyState & 0x00000400) ? 1: 0;
 			case VariableId::KeySwitch10_TimerData:
-				return _keySwitch10_tmv;
+				return _timerData[ControlId::KeySwitch10&0xff].data;
 			case VariableId::KeySwitch11_Status:
 				return (_currentKeyState & 0x00000800) ? 1: 0;
 			case VariableId::KeySwitch11_TimerData:
-				return _keySwitch11_tmv;
+				return _timerData[ControlId::KeySwitch11&0xff].data;
 			case VariableId::KeySwitch12_Status:
 				return (_currentKeyState & 0x00001000) ? 1: 0;
 			case VariableId::KeySwitch12_TimerData:
-				return _keySwitch12_tmv;
+				return _timerData[ControlId::KeySwitch12&0xff].data;
 			case VariableId::KeySwitch13_Status:
 				return (_currentKeyState & 0x00002000) ? 1: 0;
 			case VariableId::KeySwitch13_TimerData:
-				return _keySwitch13_tmv;
+				return _timerData[ControlId::KeySwitch13&0xff].data;
 			case VariableId::KeySwitch14_Status:
 				return (_currentKeyState & 0x00004000) ? 1: 0;
 			case VariableId::KeySwitch14_TimerData:
-				return _keySwitch14_tmv;
+				return _timerData[ControlId::KeySwitch14&0xff].data;
 			case VariableId::KeySwitch15_Status:
 				return (_currentKeyState & 0x00008000) ? 1: 0;
 			case VariableId::KeySwitch15_TimerData:
-				return _keySwitch15_tmv;
+				return _timerData[ControlId::KeySwitch15&0xff].data;
 			case VariableId::Button0_Status:
 				return (_currentButtonState & 0x01) ? 1: 0;
 			case VariableId::Button0_TimerData:
-				return _button0_tmv;
+				return _timerData[ControlId::Button0&0xff].data;
 			case VariableId::Button1_Status:
 				return (_currentButtonState & 0x02) ? 1: 0;
 			case VariableId::Button1_TimerData:
-				return _button1_tmv;
+				return _timerData[ControlId::Button1&0xff].data;
 			case VariableId::Wheel_Delta:
 				return _currentWheelDelta;
 			case VariableId::Wheel_TimerData:
-				return _wheel_tmv;
+				return _timerData[ControlId::Wheel&0xff].data;
 			case VariableId::Display_TimerData:
-				return _display_tmv;
+				return _timerData[ControlId::Display&0xff].data;
 			case VariableId::Ranging_Status:
 				return _currentRangingState < RANGE_THRESHOLD ? 1: 0;
 			case VariableId::Ranging_Distance:
 				return _currentRangingState;
 			case VariableId::Ranging_TimerData:
-				return _ranging_tmv;
+				return _timerData[ControlId::Ranging&0xff].data;
 			case VariableId::Main_TimerData:
-				return _main_tmv;
+				return _timerData[ControlId::Main&0xff].data;
 		}
 	}
 	return v;
@@ -277,89 +257,89 @@ float KMProcessor::floatRefeerence(float v) {
 			case VariableId::KeySwitch0_Status:
 				return (_currentKeyState & 0x00000001) ? 1: 0;
 			case VariableId::KeySwitch0_TimerData:
-				return _keySwitch0_tmv;
+				return _timerData[ControlId::KeySwitch0&0xff].data;
 			case VariableId::KeySwitch1_Status:
 				return (_currentKeyState & 0x00000002) ? 1: 0;
 			case VariableId::KeySwitch1_TimerData:
-				return _keySwitch1_tmv;
+				return _timerData[ControlId::KeySwitch1&0xff].data;
 			case VariableId::KeySwitch2_Status:
 				return (_currentKeyState & 0x00000004) ? 1: 0;
 			case VariableId::KeySwitch2_TimerData:
-				return _keySwitch2_tmv;
+				return _timerData[ControlId::KeySwitch2&0xff].data;
 			case VariableId::KeySwitch3_Status:
 				return (_currentKeyState & 0x00000008) ? 1: 0;
 			case VariableId::KeySwitch3_TimerData:
-				return _keySwitch3_tmv;
+				return _timerData[ControlId::KeySwitch3&0xff].data;
 			case VariableId::KeySwitch4_Status:
 				return (_currentKeyState & 0x00000010) ? 1: 0;
 			case VariableId::KeySwitch4_TimerData:
-				return _keySwitch4_tmv;
+				return _timerData[ControlId::KeySwitch4&0xff].data;
 			case VariableId::KeySwitch5_Status:
 				return (_currentKeyState & 0x00000020) ? 1: 0;
 			case VariableId::KeySwitch5_TimerData:
-				return _keySwitch5_tmv;
+				return _timerData[ControlId::KeySwitch5&0xff].data;
 			case VariableId::KeySwitch6_Status:
 				return (_currentKeyState & 0x00000040) ? 1: 0;
 			case VariableId::KeySwitch6_TimerData:
-				return _keySwitch6_tmv;
+				return _timerData[ControlId::KeySwitch6&0xff].data;
 			case VariableId::KeySwitch7_Status:
 				return (_currentKeyState & 0x00000080) ? 1: 0;
 			case VariableId::KeySwitch7_TimerData:
-				return _keySwitch7_tmv;
+				return _timerData[ControlId::KeySwitch7&0xff].data;
 			case VariableId::KeySwitch8_Status:
 				return (_currentKeyState & 0x00000100) ? 1: 0;
 			case VariableId::KeySwitch8_TimerData:
-				return _keySwitch8_tmv;
+				return _timerData[ControlId::KeySwitch8&0xff].data;
 			case VariableId::KeySwitch9_Status:
 				return (_currentKeyState & 0x00000200) ? 1: 0;
 			case VariableId::KeySwitch9_TimerData:
-				return _keySwitch9_tmv;
+				return _timerData[ControlId::KeySwitch9&0xff].data;
 			case VariableId::KeySwitch10_Status:
 				return (_currentKeyState & 0x00000400) ? 1: 0;
 			case VariableId::KeySwitch10_TimerData:
-				return _keySwitch10_tmv;
+				return _timerData[ControlId::KeySwitch10&0xff].data;
 			case VariableId::KeySwitch11_Status:
 				return (_currentKeyState & 0x00000800) ? 1: 0;
 			case VariableId::KeySwitch11_TimerData:
-				return _keySwitch11_tmv;
+				return _timerData[ControlId::KeySwitch11&0xff].data;
 			case VariableId::KeySwitch12_Status:
 				return (_currentKeyState & 0x00001000) ? 1: 0;
 			case VariableId::KeySwitch12_TimerData:
-				return _keySwitch12_tmv;
+				return _timerData[ControlId::KeySwitch12&0xff].data;
 			case VariableId::KeySwitch13_Status:
 				return (_currentKeyState & 0x00002000) ? 1: 0;
 			case VariableId::KeySwitch13_TimerData:
-				return _keySwitch13_tmv;
+				return _timerData[ControlId::KeySwitch13&0xff].data;
 			case VariableId::KeySwitch14_Status:
 				return (_currentKeyState & 0x00004000) ? 1: 0;
 			case VariableId::KeySwitch14_TimerData:
-				return _keySwitch14_tmv;
+				return _timerData[ControlId::KeySwitch14&0xff].data;
 			case VariableId::KeySwitch15_Status:
 				return (_currentKeyState & 0x00008000) ? 1: 0;
 			case VariableId::KeySwitch15_TimerData:
-				return _keySwitch15_tmv;
+				return _timerData[ControlId::KeySwitch15&0xff].data;
 			case VariableId::Button0_Status:
 				return (_currentButtonState & 0x01) ? 1: 0;
 			case VariableId::Button0_TimerData:
-				return _button0_tmv;
+				return _timerData[ControlId::Button0&0xff].data;
 			case VariableId::Button1_Status:
 				return (_currentButtonState & 0x02) ? 1: 0;
 			case VariableId::Button1_TimerData:
-				return _button1_tmv;
+				return _timerData[ControlId::Button1&0xff].data;
 			case VariableId::Wheel_Delta:
 				return _currentWheelDelta;
 			case VariableId::Wheel_TimerData:
-				return _wheel_tmv;
+				return _timerData[ControlId::Wheel&0xff].data;
 			case VariableId::Display_TimerData:
-				return _display_tmv;
+				return _timerData[ControlId::Display&0xff].data;
 			case VariableId::Ranging_Status:
 				return _currentRangingState < RANGE_THRESHOLD ? 1: 0;
 			case VariableId::Ranging_Distance:
 				return _currentRangingState;
 			case VariableId::Ranging_TimerData:
-				return _ranging_tmv;
+				return _timerData[ControlId::Ranging&0xff].data;
 			case VariableId::Main_TimerData:
-				return _main_tmv;
+				return _timerData[ControlId::Main&0xff].data;
 		}
 	}
 	return v;
@@ -507,6 +487,14 @@ bool KMProcessor::compaireKey(float key, uint16_t op, float value)
 	return false;
 }
 
+void KMProcessor::clearAllTimers() {
+	for(int i = 0; i < TIMER_SOURCE_COUNT; i++) {
+		_timerData[i].data = 0;
+		_timerData[i].timeout = 0;
+	}
+	_nextTimeout = 0;
+}
+
 void KMProcessor::cmdMapInput(uint32_t now, ControlId control, EventId event, Command *command) {
 	MapInputCommand *p = &command->param.mapInputCommand;
 	float key = floatRefeerence(p->key);
@@ -598,6 +586,22 @@ void KMProcessor::cmdDelay(uint32_t now, ControlId control, EventId event, Comma
 	delay(timeout);
 }
 
+void KMProcessor::cmdSetTimer(uint32_t now, ControlId control, EventId event, Command *command) {
+	TimerCommand* p = &command->param.timerCommand;
+	int index = p->target & 0xff;
+	if(0 <= index && index < TIMER_SOURCE_COUNT) {
+		_timerData[index].data = p->data;
+		_timerData[index].timeout = now + p->timeout;
+		_nextTimeout = 0;
+		for(int i = 0; i < TIMER_SOURCE_COUNT; i++) {
+			if(_timerData[i].timeout != 0) {
+				if (_nextTimeout == 0 || _timerData[i].timeout < _nextTimeout)
+					_nextTimeout = _timerData[i].timeout;
+			}
+		}
+	}
+}
+
 void KMProcessor::doCommand(uint32_t now, ControlId control, EventId event, Command *command) {
 	switch (command->commandId) {
 		case CommandId::MouseMove:
@@ -650,6 +654,12 @@ void KMProcessor::doCommand(uint32_t now, ControlId control, EventId event, Comm
 			break;
 		case CommandId::ApplicationChange:
 			cmdApplicationChange(now, control, event, command);
+			break;
+		case CommandId::Delay:
+			cmdDelay(now, control, event, command);
+			break;
+		case CommandId::SetTimer:
+			cmdSetTimer(now, control, event, command);
 			break;
 	}
 }
@@ -748,6 +758,23 @@ void KMProcessor::onLoop(uint32_t now) {
 		if (_screenTimeout) {
 			doWakeup();
 			_screenTimeout = false;
+		}
+	}
+	if(!_screenTimeout) {
+		if (_nextTimeout != 0 && _nextTimeout <= now) {
+			_nextTimeout = 0;
+			for(int i = 0; i < TIMER_SOURCE_COUNT; i++) {
+				TimerData *p = &_timerData[i];
+				if (p->timeout != 0) {
+					if (p->timeout <= now) {
+						eventDispatch(now, (ControlId) (ControlId::KeySwitch0 + i), EventId::TimerEvent);
+						p->timeout = 0;
+						p->data = 0;
+					} else if (_nextTimeout == 0 || p->timeout < _nextTimeout) {
+						_nextTimeout = p->timeout;
+					}
+				}
+			}
 		}
 	}
 }
