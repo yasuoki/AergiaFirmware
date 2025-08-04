@@ -16,7 +16,7 @@ class NeoPixelController {
 public:
 	static void init();
 	static void clearNeoPixels();
-	static void showNeoPixels();
+	static bool showNeoPixels();
 	static void setNeoPixelColor(uint16_t  n, uint32_t color);
 };
 

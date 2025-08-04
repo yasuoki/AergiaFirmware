@@ -34,12 +34,12 @@ private:
 	void transferProcess(uint32_t now, const uint8_t *data, size_t size);
 public:
 	UpdateProcessor();
-    bool virtual init();
+    bool init() override;
 
-	virtual void onSerialConnect(ControlId from, uint32_t now);
-	virtual void onSerialDisconnect(ControlId from, uint32_t now);
-	virtual void onSerial(ControlId from, uint32_t now, const uint8_t *data, size_t size);
-	virtual void onLoop(uint32_t now);
+	void onSerialConnect(ControlId from, uint32_t now) override;
+	void onSerialDisconnect(ControlId from, uint32_t now) override;
+	void onSerial(ControlId from, uint32_t now, const uint8_t *data, size_t size) override;
+	void onLoop(uint32_t now, bool eventFired) override;
 
 };
 

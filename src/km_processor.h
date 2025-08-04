@@ -23,6 +23,7 @@ private:
 	static uint16_t			_currentPage;
 	static Application *	_currentApprPtr;
 	static Page *			_currentPagePtr;
+	static bool 			_needVisualApply;
 	static bool 	_screenTimeout;
 	static bool 	_mouseTracking;
 	static int32_t 	_mouseTrackDistanceX;
@@ -87,7 +88,7 @@ public:
 	void onLeave(ControlId from, uint32_t now) override;
 	void onUsbMount(ControlId from, uint32_t now) override;
 	void onUsbUnmount(ControlId from, uint32_t now) override;
-	void onLoop(uint32_t now) override;
+	void onLoop(uint32_t now, bool eventFired) override;
 
 };
 

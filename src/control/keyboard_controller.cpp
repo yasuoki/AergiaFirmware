@@ -73,7 +73,7 @@ void KeyboardController::init() {
 
 uint32_t KeyboardController::scan(uint32_t now) {
 	if(_scanFase == 0) {
-		if (now - _lastTime <= 20000) {
+		if (now - _lastTime <= 1000) {
 			return _lastCode;
 		}
 	}

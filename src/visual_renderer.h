@@ -54,7 +54,7 @@ public:
 	static void clearFrame(VisualFrame *frame);
 
 	static void drawInitializeScreen();
-	static void applyVisual(VisualFrame *frame);
+	static bool applyVisual(VisualFrame *frame);
 	static void drawMainScreen(VisualFrame *frame);
 	static void drawControlFrame(VisualFrame *frame);
 	static void show(VisualFrame *frame);

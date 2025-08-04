@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_TinyUSB.h>
+
 #include "visual_manager.h"
 #include "visual_renderer.h"
 #include "processor.h"
@@ -22,12 +23,12 @@ bool Processor::_currentUsbConnect = false;
 bool Processor::_currentSerialConnect = false;
 
 uint8_t Processor::_currentButtonState = 0;
-uint32_t Processor::_lastButtonDownTime = 0;
-uint32_t Processor::_lastButtonUpTime = 0;
+uint32_t Processor::_lastButtonDownTime[BUTTON_COUNT];
+uint32_t Processor::_lastButtonUpTime[BUTTON_COUNT];
 
 uint16_t Processor::_currentKeyState = 0;
-uint32_t Processor::_lastKeyDownTime = 0;
-uint32_t Processor::_lastKeyUpTime = 0;
+uint32_t Processor::_lastKeyDownTime[KEYBOARD_KEY_COUNT];
+uint32_t Processor::_lastKeyUpTime[KEYBOARD_KEY_COUNT];
 
 int8_t Processor::_currentWheelDelta = 0;
 int8_t Processor::_currentWheelState = 0;
@@ -41,6 +42,21 @@ uint32_t Processor::_lastActionTime = 0;
 uint32_t Processor::_lastActionElapsedTime = 0;
 
 uint8_t recvBuffer[256];
+static struct repeating_timer keyScanTimer;
+
+bool Processor::onKeyScanTimer(struct repeating_timer *t)
+{
+	KeyboardController::scan(micros());
+	return true;
+}
+
+void Processor::startTimrScan() {
+	add_repeating_timer_ms(-20, Processor::onKeyScanTimer, this, &keyScanTimer);
+}
+
+void Processor::stopTimerScan() {
+	cancel_repeating_timer(&keyScanTimer);
+}
 
 Processor *Processor::createProcessor(ProcessorMode mode)
 {
@@ -63,16 +79,17 @@ Processor *Processor::createProcessor(ProcessorMode mode)
     return nullptr;
 }
 
-
 Processor::Processor()
 {
-	_lastKeyDownTime = 0;
-	_lastKeyUpTime = 0;
-	_lastButtonDownTime = 0;
-	_lastButtonUpTime = 0;
-	_lastWheelTime = 0;
 	_lastActionTime = millis();
-	_lastActionElapsedTime = 0;
+	for(int i = 0; i < BUTTON_COUNT; i++) {
+		_lastButtonDownTime[i] = 0;
+		_lastButtonUpTime[i] = 0;
+	}
+	for(int i = 0; i < KEYBOARD_KEY_COUNT; i++) {
+		_lastKeyDownTime[i] = 0;
+		_lastKeyUpTime[i] = 0;
+	}
 }
 
 void Processor:: log(const char *text)
@@ -124,12 +141,13 @@ void Processor::onStickEndRotate(ControlId from, uint32_t now) {}
 void Processor::onEnter(ControlId from, uint32_t now) {}
 void Processor::onLeave(ControlId from, uint32_t now) {}
 void Processor::onSerial(ControlId from, uint32_t now, const uint8_t *data, size_t size) {}
-void Processor::onLoop(uint32_t now) {}
+void Processor::onLoop(uint32_t now, bool eventFired) {}
 void Processor::onLoad(ControlId from, uint32_t now, const uint8_t *data, size_t size) {}
 void Processor::onUsbMount(ControlId from, uint32_t now) {}
 void Processor::onUsbUnmount(ControlId from, uint32_t now) {}
 void Processor::onSerialConnect(ControlId from, uint32_t now) {}
 void Processor::onSerialDisconnect(ControlId from, uint32_t now) {}
+
 
 void Processor::process(uint32_t now) {
 
@@ -259,14 +277,14 @@ void Processor::process(uint32_t now) {
 				if (!(lastButtonState & buttonBit)) {
 					onKeyDown((ControlId) buttonId, now);
 					eventFired = true;
-					_lastButtonDownTime = now;
+					_lastButtonDownTime[i] = now;
 				}
 			} else {
 				if (lastButtonState & buttonBit) {
 					onKeyUp((ControlId) buttonId, now);
 					eventFired = true;
-					_lastButtonUpTime = now;
-					if(_lastButtonUpTime - _lastButtonDownTime < 800000L)
+					_lastButtonUpTime[i] = now;
+					if(_lastButtonUpTime[i] - _lastButtonDownTime[i] < 800000L)
 						onKeyInput((ControlId)buttonId, now);
 					else
 						onKeyLongPress((ControlId)buttonId, now);
@@ -276,7 +294,7 @@ void Processor::process(uint32_t now) {
 			buttonId++;
 		}
 	}
-	if(lastKeyState != _currentKeyState) {
+	if(_currentKeyState != lastKeyState) {
 		uint16_t keyBit = 1;
 		int controlId = ControlId::KeySwitch0;
 		for(int i = 0; i < KEYBOARD_KEY_COUNT; i++) {
@@ -284,14 +302,14 @@ void Processor::process(uint32_t now) {
 				if(!(lastKeyState & keyBit)) {
 					onKeyDown((ControlId) controlId, now);
 					eventFired = true;
-					_lastKeyDownTime = now;
+					_lastKeyDownTime[i] = now;
 				}
 			} else {
 				if (lastKeyState & keyBit) {
 					onKeyUp((ControlId)controlId,now);
 					eventFired = true;
-					_lastKeyUpTime = now;
-					if(_lastKeyUpTime - _lastKeyDownTime < 800000L)
+					_lastKeyUpTime[i] = now;
+					if(_lastKeyUpTime[i] - _lastKeyDownTime[i] < 800000L)
 						onKeyInput((ControlId)controlId, now);
 					else
 						onKeyLongPress((ControlId)controlId, now);
@@ -320,6 +338,5 @@ void Processor::process(uint32_t now) {
 	} else {
 		_lastActionElapsedTime = millis() - _lastActionTime;
 	}
-	onLoop(now);
+	onLoop(now, eventFired);
 }
-

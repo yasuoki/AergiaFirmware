@@ -8,8 +8,6 @@ Adafruit_USBD_HID Driver::hid;
 
 hid_keyboard_report_t keyboardReport;
 hid_mouse_report_t mouseReport;
-unsigned long Driver::mouseReportLastTime = 0;
-unsigned long Driver::keyboardReportLastTime = 0;
 
 #define RID_KEYBOARD 		   1
 #define RID_MOUSE    		   2
@@ -80,7 +78,6 @@ void Driver::mouseMove(int8_t x, int8_t y)
 	mouseReport.y = y;
 	mouseReport.wheel = 0;
 	hid.sendReport(RID_MOUSE,&mouseReport,sizeof(mouseReport));
-	mouseReportLastTime = millis();
 }
 
 void Driver::mouseWheel(int8_t w)
@@ -89,7 +86,6 @@ void Driver::mouseWheel(int8_t w)
 	mouseReport.y = 0;
 	mouseReport.wheel = w;
 	hid.sendReport(RID_MOUSE,&mouseReport,sizeof(mouseReport));
-	mouseReportLastTime = millis();
 }
 
 void Driver::mouseButtonPress(uint8_t button)
@@ -101,7 +97,6 @@ void Driver::mouseButtonPress(uint8_t button)
 		mouseReport.wheel = 0;
 		mouseReport.buttons = newState;
 		hid.sendReport(RID_MOUSE, &mouseReport, sizeof(mouseReport));
-		mouseReportLastTime = millis();
 	}
 }
 
@@ -114,7 +109,6 @@ void Driver::mouseButtonRelease(uint8_t button)
 		mouseReport.wheel = 0;
 		mouseReport.buttons = newState;
 		hid.sendReport(RID_MOUSE, &mouseReport, sizeof(mouseReport));
-		mouseReportLastTime = millis();
 	}
 }
 
@@ -172,10 +166,8 @@ bool Driver::keyPress(uint8_t code)
 				return false;
 			keyboardReport.keycode[i] = code;
 		}
-		//Serial.printf("keyPress %x\r\n", code);
 		hid.sendReport(RID_KEYBOARD, &keyboardReport, sizeof(keyboardReport));
 	}
-	keyboardReportLastTime = millis();
 	return true;
 }
 
@@ -201,7 +193,6 @@ bool Driver::keyRelease(uint8_t code)
 		//Serial.printf("keyRelease %x\r\n", code);
 		hid.sendReport(RID_KEYBOARD, &keyboardReport, sizeof(keyboardReport));
 	}
-	keyboardReportLastTime = millis();
 	return true;
 }
 
@@ -209,6 +200,5 @@ void Driver::releaseAllKey() {
 	if(keyboardReport.modifier != 0) {
 		keyboardReport.modifier = 0;
 		hid.sendReport(RID_KEYBOARD, &keyboardReport, sizeof(keyboardReport));
-		keyboardReportLastTime = millis();
 	}
 }

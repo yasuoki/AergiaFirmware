@@ -18,8 +18,6 @@ class Adafruit_USBD_HID;
 class Driver final {
 private:
 	static Adafruit_USBD_HID	hid;
-	static unsigned long keyboardReportLastTime;
-	static unsigned long mouseReportLastTime;
 
 	Driver() {}
 	~Driver() {}

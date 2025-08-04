@@ -20,12 +20,14 @@ void NeoPixelController::clearNeoPixels()
 	_neoPixels.show();
 	updateColor = false;
 }
-void NeoPixelController::showNeoPixels()
+bool NeoPixelController::showNeoPixels()
 {
 	if(updateColor) {
 		_neoPixels.show();
 		updateColor = false;
+		return true;
 	}
+	return false;
 }
 void NeoPixelController::setNeoPixelColor(uint16_t  n, uint32_t color)
 {

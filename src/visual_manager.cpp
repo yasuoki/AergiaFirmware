@@ -127,11 +127,7 @@ void VisualManager::setVisual(ControlId controlId, Visual *visual) {
 
 	if(vfPtr != nullptr) {
 		if(visual != nullptr) {
-			vfPtr->visual.text = visual->text;
-			vfPtr->visual.icon = visual->icon;
-			vfPtr->visual.color = visual->color;
-			vfPtr->visual.bgColor = visual->bgColor;
-			vfPtr->visual.fontSize = visual->fontSize;
+			vfPtr->visual = *visual;
 		} else {
 			vfPtr->visual = _emptyVisual;
 		}
@@ -157,19 +153,27 @@ void VisualManager::updateVisual(ControlId controlId, Visual *visual) {
 	}
 }
 
-void VisualManager::apply() {
+bool VisualManager::apply() {
 	for(int i = 0; i < VISUAL_FRAME_COUNT; i++) {
 		VisualFrame *vfPtr = &_visualMapping[i];
-		if(vfPtr->screen != -1 && !vfPtr->apply) {
-			VisualRenderer::applyVisual(vfPtr);
-		}
+		if(VisualRenderer::applyVisual(vfPtr))
+			return true;
+	}
+	NeoPixelController::showNeoPixels();
+	return false;
+}
+
+void VisualManager::applyImmideate() {
+	for(int i = 0; i < VISUAL_FRAME_COUNT; i++) {
+		VisualFrame *vfPtr = &_visualMapping[i];
+		VisualRenderer::applyVisual(vfPtr);
 	}
 	NeoPixelController::showNeoPixels();
 }
 
 void VisualManager::applyDisplay() {
 	VisualFrame *vfPtr = getVisualFrame(ControlId::Display);
-	if(vfPtr != nullptr && vfPtr->screen != -1 && !vfPtr->apply) {
+	if(vfPtr != nullptr) {
 		VisualRenderer::applyVisual(vfPtr);
 	}
 }
@@ -178,9 +182,7 @@ void VisualManager::show() {
 	DisplayController::selectScreen(0)->screenOn();
 	for(int i = 0; i < VISUAL_FRAME_COUNT; i++) {
 		VisualFrame *vfPtr = &_visualMapping[i];
-		if(vfPtr->screen != -1) {
-			VisualRenderer::show(vfPtr);
-		}
+		VisualRenderer::show(vfPtr);
 	}
 	NeoPixelController::showNeoPixels();
 }
@@ -188,9 +190,7 @@ void VisualManager::show() {
 void VisualManager::hide() {
 	for(int i = 0; i < VISUAL_FRAME_COUNT; i++) {
 		VisualFrame *vfPtr = &_visualMapping[i];
-		if(vfPtr->screen != -1) {
-			VisualRenderer::hide(vfPtr);
-		}
+		VisualRenderer::hide(vfPtr);
 	}
 	NeoPixelController::clearNeoPixels();
 	DisplayController::selectScreen(0)->screenOff();

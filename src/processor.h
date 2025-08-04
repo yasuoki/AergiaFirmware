@@ -6,6 +6,8 @@
 #define INC_AERGIA_PROCESSOR_H
 
 #include <Arduino.h>
+#include <pico/stdlib.h>
+#include <hardware/timer.h>
 #include "config.h"
 
 class Processor {
@@ -15,12 +17,12 @@ protected:
 
 	static bool _currentSerialConnect;
 	static uint8_t _currentButtonState;
-	static uint32_t _lastButtonDownTime;
-	static uint32_t _lastButtonUpTime;
+	static uint32_t _lastButtonDownTime[BUTTON_COUNT];
+	static uint32_t _lastButtonUpTime[BUTTON_COUNT];
 
 	static uint16_t _currentKeyState;
-	static uint32_t _lastKeyDownTime;
-	static uint32_t _lastKeyUpTime;
+	static uint32_t _lastKeyDownTime[KEYBOARD_KEY_COUNT];
+	static uint32_t _lastKeyUpTime[KEYBOARD_KEY_COUNT];
 
 	static int8_t _currentWheelDelta;
 	static int8_t _currentWheelState;
@@ -44,6 +46,10 @@ protected:
 	static uint32_t _lastActionElapsedTime;
 
 	Processor();
+
+	static bool onKeyScanTimer(struct repeating_timer *t);
+	void startTimrScan();
+	void stopTimerScan();
 
 public:
 	static void log(const char *text);
@@ -76,7 +82,7 @@ public:
 	virtual void onSerialConnect(ControlId from, uint32_t now);
 	virtual void onSerialDisconnect(ControlId from, uint32_t now);
 	virtual void onSerial(ControlId from, uint32_t now, const uint8_t *data, size_t size);
-	virtual void onLoop(uint32_t now);
+	virtual void onLoop(uint32_t now, bool eventFired);
 
 	void process(uint32_t now);
 };

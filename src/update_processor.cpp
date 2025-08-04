@@ -247,7 +247,7 @@ void UpdateProcessor::transferProcess(uint32_t now, const uint8_t *data, size_t 
 	}
 }
 
-void UpdateProcessor::onLoop(uint32_t now) {
+void UpdateProcessor::onLoop(uint32_t now, bool eventFired) {
 	if (_status == WaitConnection) {
 		if(now - _lastLoop > 1000000L) {
 			if(_messageCont == 0) {

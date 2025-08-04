@@ -277,16 +277,17 @@ void VisualRenderer::drawControlFrame(VisualFrame *vf) {
 	screen->display();
 }
 
-void VisualRenderer::applyVisual(VisualFrame *vf)
+bool VisualRenderer::applyVisual(VisualFrame *vf)
 {
-	if(vf->screen == -1)
-		return;
+	if(vf->screen == -1 || vf->apply)
+		return false;
 	if(vf->controlId == ControlId::Display) {
 		drawMainScreen(vf);
 	} else {
 		drawControlFrame(vf);
 	}
 	vf->apply = true;
+	return true;
 }
 
 void VisualRenderer::show(VisualFrame *vf) {

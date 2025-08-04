@@ -21,7 +21,8 @@ public:
 	static void clearSubFrames();
 	static void setVisual(ControlId controlId, Visual *visual);
 	static void updateVisual(ControlId controlId, Visual *visual);
-	static void apply();
+	static bool apply();
+	static void applyImmideate();
 	static void applyDisplay();
 	static void show();
 	static void hide();

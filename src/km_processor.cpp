@@ -18,6 +18,7 @@ uint16_t KMProcessor::_currentAppr = 0;
 uint16_t KMProcessor::_currentPage = 0;
 Application * KMProcessor::_currentApprPtr = nullptr;
 Page * KMProcessor::_currentPagePtr = nullptr;
+bool KMProcessor::_needVisualApply = false;
 bool KMProcessor::_screenTimeout = false;
 bool KMProcessor::_mouseTracking = false;
 int32_t KMProcessor::_mouseTrackDistanceX = 0;
@@ -42,7 +43,9 @@ bool KMProcessor::init() {
 
 	Driver::init();
 	remapApplication();
-	VisualManager::apply();
+	VisualManager::applyImmideate();
+	_needVisualApply = false;
+
 	return true;
 }
 
@@ -59,6 +62,7 @@ void KMProcessor::remapPage() {
 			VisualManager::setVisual((ControlId)bind->controlId, bind->controlPtr->visualPtr);
 		}
 	}
+	_needVisualApply = true;
 }
 
 void KMProcessor::changeApplication(uint16_t applicationIndex, uint16_t pageIndex) {
@@ -96,7 +100,6 @@ void KMProcessor::changePage(uint16_t pageIndex) {
 	_currentPage = pageIndex;
 	_currentPagePtr = _currentApprPtr->pages[_currentPage].pagePtr;
 	remapPage();
-	VisualManager::apply();
 }
 
 void KMProcessor::nextPage() {
@@ -549,22 +552,21 @@ void KMProcessor::cmdMapAction(uint32_t now, ControlId control, EventId event, C
 }
 
 void KMProcessor::cmdPageChange(uint32_t now, ControlId control, EventId event, Command *command) {
-	int nextPage = -1;
-	for (int i = 0; i < _currentApprPtr->count; i++) {
-		if (strcmp(command->param.pageChangeCommand.pageNamePtr, _currentApprPtr->pages[i].pageNamePtr) == 0) {
-			nextPage = i;
+	PageBind *page =  _currentApprPtr->pages;
+	for (int i = 0; i < _currentApprPtr->count; i++, page++) {
+		if (strcmp(command->param.pageChangeCommand.pageNamePtr, page->pageNamePtr) == 0) {
+			changePage(i);
 			break;
 		}
 	}
-	if(nextPage != _currentPage)
-		changePage(nextPage);
 }
 
 void KMProcessor::cmdApplicationChange(uint32_t now, ControlId control, EventId event, Command *command) {
 	ApplicationChangeCommand *p = &command->param.applicationChangeCommand;
 	int nextAppr = -1;
-	for (int i = 0; i < _config->root->count; i++) {
-		if (strcmp(p->applicationNamePtr, _config->root->appRef[i].appNamePtr) == 0) {
+	ApplicationBind *app = _config->root->appRef;
+	for (int i = 0; i < _config->root->count; i++, app++) {
+		if (strcmp(p->applicationNamePtr, app->appNamePtr) == 0) {
 			nextAppr = i;
 			break;
 		}
@@ -573,8 +575,9 @@ void KMProcessor::cmdApplicationChange(uint32_t now, ControlId control, EventId 
 		int nextPage = -1;
 		if(p->pageNamePtr != nullptr) {
 			Application *appr = _config->root->appRef[nextAppr].applicationPtr;
-			for (int i = 0; i < appr->count; i++) {
-				if (strcmp(p->pageNamePtr, appr->pages[i].pageNamePtr) == 0) {
+			PageBind *page =  appr->pages;
+			for (int i = 0; i < appr->count; i++, page++) {
+				if (strcmp(p->pageNamePtr, page->pageNamePtr) == 0) {
 					nextPage = i;
 					break;
 				}
@@ -676,29 +679,26 @@ void KMProcessor::doCommand(uint32_t now, ControlId control, EventId event, Comm
 void KMProcessor::eventDispatch(uint32_t now, ControlId control, EventId event) {
 	if (_currentRangingState < RANGE_THRESHOLD)
 		return;
-	//Serial.printf("event dispatch: c=%x e=%x\r\n", control, event);
+	ControlBind *ctrlBind = _currentPagePtr->controlBind;
 	for (int i = 0; i < _currentPagePtr->count; i++) {
-		ControlBind *ctrlBind = &_currentPagePtr->controlBind[i];
 		if (ctrlBind->controlId == control) {
-			//Serial.println("control match");
 			Control *controlPtr = ctrlBind->controlPtr;
+			EventBind *eventBind = controlPtr->eventBind;
 			for (int j = 0; j < controlPtr->count; j++) {
-				EventBind *eventBind = &controlPtr->eventBind[j];
 				if (eventBind->eventId == event) {
-					//Serial.println("event match");
 					ActionCommand *actionCommand = eventBind->actionCommandPtr;
 					if (actionCommand != nullptr) {
 						for (int k = 0; k < actionCommand->count; k++) {
 							Command *command = actionCommand->commandPtr[k];
-							//Serial.printf("action [%d] %x\r\n", k, command->commandId);
 							doCommand(now, control, event, command);
 						}
 					}
 				}
+				eventBind++;
 			}
 		}
+		ctrlBind++;
 	}
-	//Serial.println("dispatch end");
 }
 
 void KMProcessor::onKeyDown(ControlId from, uint32_t now) {
@@ -745,7 +745,8 @@ void KMProcessor::onEnter(ControlId from, uint32_t now) {
 
 void KMProcessor::onLeave(ControlId from, uint32_t now) {
 	VisualManager::showLed();
-	VisualManager::apply();
+//	VisualManager::applyImmideate();
+//	_needVisualApply = false;
 	eventDispatch(now, from, EventId::LeaveEvent);
 }
 
@@ -757,7 +758,7 @@ void KMProcessor::onUsbUnmount(ControlId from, uint32_t now) {
 	doSleep();
 }
 
-void KMProcessor::onLoop(uint32_t now) {
+void KMProcessor::onLoop(uint32_t now, bool eventFired) {
 	if (_lastActionElapsedTime > 30L * 60L * 1000L) {
 		if (!_screenTimeout) {
 			doSleep();
@@ -770,6 +771,15 @@ void KMProcessor::onLoop(uint32_t now) {
 		}
 	}
 	if(!_screenTimeout) {
+		if(_lastActionElapsedTime > 100L) {
+			if(eventFired)
+				_needVisualApply = false;
+			else {
+				startTimrScan();
+				_needVisualApply = VisualManager::apply();
+				stopTimerScan();
+			}
+		}
 		if (_nextTimeout != 0 && _nextTimeout <= now) {
 			_nextTimeout = 0;
 			for(int i = 0; i < TIMER_SOURCE_COUNT; i++) {
