@@ -66,6 +66,7 @@ void KMProcessor::remapPage() {
 }
 
 void KMProcessor::changeApplication(uint16_t applicationIndex, uint16_t pageIndex) {
+    clearAllTimers();
 	_currentAppr = applicationIndex;
 	_currentApprPtr = _config->root->appRef[_currentAppr].applicationPtr;
 	_currentPage = pageIndex;
@@ -97,6 +98,7 @@ void KMProcessor::prevApplication() {
 }
 
 void KMProcessor::changePage(uint16_t pageIndex) {
+    clearAllTimers();
 	_currentPage = pageIndex;
 	_currentPagePtr = _currentApprPtr->pages[_currentPage].pagePtr;
 	remapPage();
@@ -133,6 +135,10 @@ void KMProcessor::doWakeup() {
 }
 
 void KMProcessor::mouseMove(int32_t x, int32_t y) {
+    if(_mouseTracking) {
+        _mouseTrackDistanceX += x;
+        _mouseTrackDistanceY += y;
+    }
 	while (x != 0 || y != 0) {
 		int8_t dx;
 		int8_t dy;
@@ -152,10 +158,6 @@ void KMProcessor::mouseMove(int32_t x, int32_t y) {
 		x -= dx;
 		y -= dy;
 		delay(sqrt(dx * dx + dy * dy));
-	}
-	if(_mouseTracking) {
-		_mouseTrackDistanceX += x;
-		_mouseTrackDistanceY += y;
 	}
 }
 
