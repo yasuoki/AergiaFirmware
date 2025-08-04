@@ -27,7 +27,8 @@
 #error	"device type is not defined"
 #endif
 
-#define KEYBOARD_BUS_SETTLE_DELAY		100L
+#define KEYBOARD_BUS_SETTLE_DELAY		90L
+#define DEFAULT_KEYBOARD_INTERVAL		50L
 #define ENABLE_KEYBOARD_STABLE_SCAN
 
 #define BUTTON_STATE_0	0x01

@@ -429,11 +429,14 @@ void KMProcessor::cmdButtonRelease(uint32_t now, ControlId control, EventId even
 
 void KMProcessor::cmdKeyPress(uint32_t now, ControlId control, EventId event, Command *command) {
 	UsageList *up = command->param.keyCommand.usageListPtr;
+	uint interval = command->param.keyCommand.interval;
+	if(interval == 0)
+		interval = DEFAULT_KEYBOARD_INTERVAL;
 	if (up) {
 		uint8_t *ptr = up->usage;
 		for (int i = 0; i < up->len; i++) {
 			Driver::keyPress(*ptr);
-			delay(40);
+			delay(interval);
 			ptr++;
 		}
 	}
@@ -441,11 +444,14 @@ void KMProcessor::cmdKeyPress(uint32_t now, ControlId control, EventId event, Co
 
 void KMProcessor::cmdKeyRelease(uint32_t now, ControlId control, EventId event, Command *command) {
 	UsageList *up = command->param.keyCommand.usageListPtr;
+	uint interval = command->param.keyCommand.interval;
+	if(interval == 0)
+		interval = DEFAULT_KEYBOARD_INTERVAL;
 	if (up) {
 		uint8_t *ptr = up->usage;
 		for (int i = 0; i < up->len; i++) {
 			Driver::keyRelease(*ptr);
-			delay(40);
+			delay(interval);
 			ptr++;
 		}
 	}
@@ -453,15 +459,18 @@ void KMProcessor::cmdKeyRelease(uint32_t now, ControlId control, EventId event, 
 
 void KMProcessor::cmdKeyInput(uint32_t now, ControlId control, EventId event, Command *command) {
 	UsageList *up = command->param.keyCommand.usageListPtr;
+	uint interval = command->param.keyCommand.interval;
+	if(interval == 0)
+		interval = DEFAULT_KEYBOARD_INTERVAL;
 	if (up) {
 		uint8_t *ptr = up->usage;
 		for (int i = 0; i < up->len; i++) {
 			Driver::keyPress(*ptr);
 			if (!IS_MODIFIER_KEY(*ptr)) {
-				delay(20);
+				delay(interval);
 				Driver::keyRelease(*ptr);
 			}
-			delay(20);
+			delay(interval);
 			ptr++;
 		}
 	}
