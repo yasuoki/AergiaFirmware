@@ -16,15 +16,18 @@ protected:
 	static bool _currentUsbConnect;
 
 	static bool _currentSerialConnect;
-	static uint8_t _currentButtonState;
+	static volatile uint8_t _currentButtonState;
+	static uint8_t _lastButtonState;
 	static uint32_t _lastButtonDownTime[BUTTON_COUNT];
 	static uint32_t _lastButtonUpTime[BUTTON_COUNT];
 
-	static uint16_t _currentKeyState;
+	static volatile uint16_t _currentKeyState;
+	static uint16_t _lastKeyState;
 	static uint32_t _lastKeyDownTime[KEYBOARD_KEY_COUNT];
 	static uint32_t _lastKeyUpTime[KEYBOARD_KEY_COUNT];
 
-	static int8_t _currentWheelDelta;
+	static volatile int8_t _currentWheelDelta;
+	static int8_t _lastWheelDelta;
 	static int8_t _currentWheelState;
 	static uint32_t _lastWheelTime;
 
@@ -50,6 +53,7 @@ protected:
 	static bool onKeyScanTimer(struct repeating_timer *t);
 	void startTimrScan();
 	void stopTimerScan();
+    static void backgroundScanProcess();
 
 public:
 	static void log(const char *text);

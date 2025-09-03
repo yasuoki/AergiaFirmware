@@ -46,7 +46,7 @@ bool KMProcessor::init() {
 	VisualManager::applyImmideate();
 	_needVisualApply = false;
 
-	return true;
+    return Processor::init();
 }
 
 void KMProcessor::remapApplication() {
@@ -777,9 +777,9 @@ void KMProcessor::onLoop(uint32_t now, bool eventFired) {
 			if(eventFired)
 				_needVisualApply = false;
 			else {
-				startTimrScan();
+//				startTimrScan();
 				_needVisualApply = VisualManager::apply();
-				stopTimerScan();
+//				stopTimerScan();
 			}
 		}
 		if (_nextTimeout != 0 && _nextTimeout <= now) {

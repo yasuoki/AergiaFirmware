@@ -22,15 +22,18 @@ bool Processor::_currentUsbConnect = false;
 
 bool Processor::_currentSerialConnect = false;
 
-uint8_t Processor::_currentButtonState = 0;
+volatile uint8_t Processor::_currentButtonState = 0;
+uint8_t Processor::_lastButtonState = 0;
 uint32_t Processor::_lastButtonDownTime[BUTTON_COUNT];
 uint32_t Processor::_lastButtonUpTime[BUTTON_COUNT];
 
-uint16_t Processor::_currentKeyState = 0;
+volatile uint16_t Processor::_currentKeyState = 0;
+uint16_t Processor::_lastKeyState = 0;
 uint32_t Processor::_lastKeyDownTime[KEYBOARD_KEY_COUNT];
 uint32_t Processor::_lastKeyUpTime[KEYBOARD_KEY_COUNT];
 
-int8_t Processor::_currentWheelDelta = 0;
+volatile int8_t Processor::_currentWheelDelta = 0;
+int8_t Processor::_lastWheelDelta = 0;
 int8_t Processor::_currentWheelState = 0;
 uint32_t Processor::_lastWheelTime = 0;
 
@@ -102,6 +105,7 @@ void Processor:: log(const char *text)
 
 bool Processor::init()
 {
+    multicore_launch_core1(backgroundScanProcess);
 	return true;
 }
 
@@ -148,6 +152,16 @@ void Processor::onUsbUnmount(ControlId from, uint32_t now) {}
 void Processor::onSerialConnect(ControlId from, uint32_t now) {}
 void Processor::onSerialDisconnect(ControlId from, uint32_t now) {}
 
+void Processor::backgroundScanProcess()
+{
+    while(true) {
+        uint32_t now = (uint32_t)time_us_64();
+
+        __atomic_store_n(&_currentButtonState,ButtonController::scan(now), __ATOMIC_RELAXED);
+        __atomic_store_n(&_currentKeyState, KeyboardController::scan(now), __ATOMIC_RELAXED);
+        __atomic_store_n(&_currentWheelDelta, WheelController::scan(now), __ATOMIC_RELAXED);
+    }
+}
 
 void Processor::process(uint32_t now) {
 
@@ -198,15 +212,12 @@ void Processor::process(uint32_t now) {
 		}
 	}
 
-	uint8_t lastButtonState = _currentButtonState;
-	_currentButtonState = ButtonController::scan(now);
+	uint8_t currentButtonState = __atomic_load_n(&_currentButtonState, __ATOMIC_RELAXED);
+    uint16_t currentKeyState = __atomic_load_n(&_currentKeyState, __ATOMIC_RELAXED);
+    int8_t currentWheelDelta =  __atomic_load_n(&_currentWheelDelta, __ATOMIC_RELAXED);
 #if defined(JOYSTICK_CONTROLLER)
 	uint8_t joystickFlag = JoystickController::scan(now);
 #endif
-	uint8_t lastWheelDelta = _currentWheelDelta;
-	_currentWheelDelta = WheelController::scan(now);
-	uint16_t lastKeyState = _currentKeyState;
-	_currentKeyState = KeyboardController::scan(now);
 	uint8_t lastRangingState = _currentRangingState;
 	_currentRangingState = RangingController::scan(now);
 
@@ -251,36 +262,19 @@ void Processor::process(uint32_t now) {
 		}
 	}
 #endif
-	if(_currentWheelDelta != lastWheelDelta && _currentWheelDelta != 0) {
-		if(!_currentWheelState) {
-			onWheelBegin(ControlId::Wheel, now, _currentWheelDelta);
-			_currentWheelState = true;
-		}
-		onWheel(ControlId::Wheel, now, _currentWheelDelta);
-		_lastWheelTime = now;
-		eventFired = true;
-	}
-	else if(_currentWheelState) {
-		if(now - _lastWheelTime > 800000L) {
-			onWheelEnd(ControlId::Wheel, now, _currentWheelDelta);
-			eventFired = true;
-			_lastWheelTime = now;
-			_currentWheelState = false;
-		}
-	}
 
-	if(_currentButtonState != lastButtonState) {
+	if(currentButtonState != _lastButtonState) {
 		uint8_t buttonBit = 1;
 		int buttonId = ControlId::Button0;
 		for(int i = 0; i < BUTTON_COUNT; i++) {
-			if (_currentButtonState & buttonBit) {
-				if (!(lastButtonState & buttonBit)) {
+			if (currentButtonState & buttonBit) {
+				if (!(_lastButtonState & buttonBit)) {
 					onKeyDown((ControlId) buttonId, now);
 					eventFired = true;
 					_lastButtonDownTime[i] = now;
 				}
 			} else {
-				if (lastButtonState & buttonBit) {
+				if (_lastButtonState & buttonBit) {
 					onKeyUp((ControlId) buttonId, now);
 					eventFired = true;
 					_lastButtonUpTime[i] = now;
@@ -293,19 +287,20 @@ void Processor::process(uint32_t now) {
 			buttonBit <<= 1;
 			buttonId++;
 		}
+		_lastButtonState = currentButtonState;
 	}
-	if(_currentKeyState != lastKeyState) {
+	if(currentKeyState != _lastKeyState) {
 		uint16_t keyBit = 1;
 		int controlId = ControlId::KeySwitch0;
 		for(int i = 0; i < KEYBOARD_KEY_COUNT; i++) {
-			if(_currentKeyState & keyBit) {
-				if(!(lastKeyState & keyBit)) {
+			if(currentKeyState & keyBit) {
+				if(!(_lastKeyState & keyBit)) {
 					onKeyDown((ControlId) controlId, now);
 					eventFired = true;
 					_lastKeyDownTime[i] = now;
 				}
 			} else {
-				if (lastKeyState & keyBit) {
+				if (_lastKeyState & keyBit) {
 					onKeyUp((ControlId)controlId,now);
 					eventFired = true;
 					_lastKeyUpTime[i] = now;
@@ -318,6 +313,26 @@ void Processor::process(uint32_t now) {
 			keyBit <<= 1;
 			controlId++;
 		}
+		_lastKeyState = currentKeyState;
+	}
+	if(currentWheelDelta != _lastWheelDelta && currentWheelDelta != 0) {
+		if(!_currentWheelState) {
+			onWheelBegin(ControlId::Wheel, now, currentWheelDelta);
+			_currentWheelState = true;
+		}
+		onWheel(ControlId::Wheel, now, currentWheelDelta);
+		eventFired = true;
+		_lastWheelTime = now;
+		_lastWheelDelta = currentWheelDelta;
+	}
+	else if(_currentWheelState) {
+//		if(now - _lastWheelTime > 800000L) {
+			onWheelEnd(ControlId::Wheel, now, currentWheelDelta);
+			eventFired = true;
+			_lastWheelTime = now;
+			_currentWheelState = false;
+			_lastWheelDelta = currentWheelDelta;
+//		}
 	}
 
 	if(_currentRangingState < RANGE_THRESHOLD) {
