@@ -51,8 +51,6 @@ protected:
 	Processor();
 
 	static bool onKeyScanTimer(struct repeating_timer *t);
-	void startTimrScan();
-	void stopTimerScan();
     static void backgroundScanProcess();
 
 public:

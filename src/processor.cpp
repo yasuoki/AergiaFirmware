@@ -53,14 +53,6 @@ bool Processor::onKeyScanTimer(struct repeating_timer *t)
 	return true;
 }
 
-void Processor::startTimrScan() {
-	add_repeating_timer_ms(-20, Processor::onKeyScanTimer, this, &keyScanTimer);
-}
-
-void Processor::stopTimerScan() {
-	cancel_repeating_timer(&keyScanTimer);
-}
-
 Processor *Processor::createProcessor(ProcessorMode mode)
 {
 	Processor *p;

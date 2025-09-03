@@ -773,17 +773,9 @@ void KMProcessor::onLoop(uint32_t now, bool eventFired) {
 		}
 	}
 	if(!_screenTimeout) {
-		if(_lastActionElapsedTime > 100L) {
-			if(eventFired)
-				_needVisualApply = false;
-			else {
-//				startTimrScan();
-				_needVisualApply = VisualManager::apply();
-//				stopTimerScan();
-			}
-		}
 		if (_nextTimeout != 0 && _nextTimeout <= now) {
 			_nextTimeout = 0;
+			bool fireTimerEvent = false;
 			for(int i = 0; i < TIMER_SOURCE_COUNT; i++) {
 				TimerData *p = &_timerData[i];
 				if (p->timeout != 0) {
@@ -791,10 +783,27 @@ void KMProcessor::onLoop(uint32_t now, bool eventFired) {
 						eventDispatch(now, (ControlId) (ControlId::KeySwitch0 + i), EventId::TimerEvent);
 						p->timeout = 0;
 						p->data = 0;
+						fireTimerEvent = true;
 					} else if (_nextTimeout == 0 || p->timeout < _nextTimeout) {
 						_nextTimeout = p->timeout;
 					}
 				}
+			}
+			if (fireTimerEvent) {
+				eventFired = true;
+				_lastActionTime = millis();
+				_lastActionElapsedTime = 0;
+			}
+		}
+		if(_lastActionElapsedTime > 100L) {
+			if(eventFired) {
+				_needVisualApply = false;
+			}
+			else if (_currentRangingState < RANGE_THRESHOLD) {
+				VisualManager::applyDisplay();
+			}
+			else if (_needVisualApply) {
+				_needVisualApply = VisualManager::apply();
 			}
 		}
 	}
