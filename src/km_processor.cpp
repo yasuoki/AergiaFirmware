@@ -761,6 +761,9 @@ void KMProcessor::onUsbUnmount(ControlId from, uint32_t now) {
 }
 
 void KMProcessor::onLoop(uint32_t now, bool eventFired) {
+
+	Driver::task();
+
 	if (_lastActionElapsedTime > 30L * 60L * 1000L) {
 		if (!_screenTimeout) {
 			doSleep();

@@ -46,6 +46,10 @@ uint8_t const desc_hid_report[] =
 
 void Driver::init()
 {
+#ifdef USE_TINYUSB
+	TinyUSB_Device_Init(0);
+#endif
+
 	TinyUSBDevice.clearConfiguration();
 	TinyUSBDevice.setManufacturerDescriptor("Yonabe Factory");
 	TinyUSBDevice.setProductDescriptor(DEVICE_MODEL);
@@ -66,6 +70,13 @@ void Driver::init()
 	}
 
 }
+
+void Driver::task() {
+#ifdef USE_TINYUSB
+	TinyUSB_Device_Task();
+#endif
+}
+
 
 bool Driver::isConnected()
 {

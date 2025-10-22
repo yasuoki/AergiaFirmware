@@ -25,6 +25,7 @@ private:
 
 public:
 	static void init();
+	static void task();
 	static bool isConnected();
 
 	static void mouseMove(int8_t x, int8_t y);
