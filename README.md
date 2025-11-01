@@ -16,3 +16,6 @@ platformio run
 Releaseにビルド済みのuf2バイナリファイルが添付されています。
 ソースコードからビルドでしなくても、添付されているuf2ファイルをインストールして利用することもできます。
 
+## SSD1306 OLED Tester
+以下のリンクのプログラムで、SSD1306 OLEDディスプレイの動作確認を行うことができます。  
+https://github.com/yasuoki/SSD1306Tester
