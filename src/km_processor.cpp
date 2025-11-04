@@ -378,18 +378,21 @@ void KMProcessor::cmdMouseTrackingRewind(uint32_t now, ControlId control, EventI
 }
 
 void KMProcessor::cmdMouseWheel(uint32_t now, ControlId control, EventId event, Command *command) {
-	int16_t delta = (int16_t)intRefeerence(command->param.mouseWheelCommand.delta);
+	int delta = intRefeerence(command->param.mouseWheelCommand.delta);
+	float r = floatRefeerence(command->param.mouseWheelCommand.r);
+	if( abs(r) < 0.1f )
+		r = 1;
+	delta = (int)((float)delta * r);
 	while (delta != 0) {
 		int8_t d;
-		if (delta < INT8_MIN)
-			d = INT8_MIN;
-		else if (delta > INT8_MAX)
-			d = INT8_MAX;
+		if (delta < -16)
+			d = -16;
+		else if (delta > 16)
+			d = 16;
 		else
 			d = (int8_t) delta;
 		Driver::mouseWheel(d);
 		delta -= d;
-		delay(d * 50);
 	}
 }
 
