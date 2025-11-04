@@ -161,8 +161,9 @@ void KMProcessor::mouseMove(int32_t x, int32_t y) {
 	}
 }
 
-int KMProcessor::intRefeerence(int v) {
-	if(VariableId::KeySwitch0_Status <= (uint16_t)v && (uint16_t)v <= VariableId::Main_TimerData) {
+int KMProcessor::intRefeerence(int ref) {
+	uint16_t v = (uint16_t)(ref & 0xffff);
+	if(VariableId::KeySwitch0_Status <= v && v <= VariableId::Main_TimerData) {
 		switch(v) {
 			case VariableId::KeySwitch0_Status:
 				return (_currentKeyState & 0x00000001) ? 1: 0;
@@ -252,10 +253,11 @@ int KMProcessor::intRefeerence(int v) {
 				return _timerData[ControlId::Main&0xff].data;
 		}
 	}
-	return v;
+	return ref;
 }
 
-float KMProcessor::floatRefeerence(float v) {
+float KMProcessor::floatRefeerence(float ref) {
+	uint16_t v = (uint16_t)ref;
 	if(VariableId::KeySwitch0_Status <= (uint16_t)v && (uint16_t)v <= VariableId::Main_TimerData) {
 		uint16_t vd = (uint16_t)v;
 		switch(vd) {
@@ -347,7 +349,7 @@ float KMProcessor::floatRefeerence(float v) {
 				return _timerData[ControlId::Main&0xff].data;
 		}
 	}
-	return v;
+	return ref;
 }
 
 void KMProcessor::cmdMouseMove(uint32_t now, ControlId control, EventId event, Command *command) {
@@ -679,8 +681,6 @@ void KMProcessor::doCommand(uint32_t now, ControlId control, EventId event, Comm
 }
 
 void KMProcessor::eventDispatch(uint32_t now, ControlId control, EventId event) {
-	if (_currentRangingState < RANGE_THRESHOLD)
-		return;
 	ControlBind *ctrlBind = _currentPagePtr->controlBind;
 	for (int i = 0; i < _currentPagePtr->count; i++) {
 		if (ctrlBind->controlId == control) {
@@ -707,24 +707,29 @@ void KMProcessor::onKeyDown(ControlId from, uint32_t now) {
 	if (_currentRangingState < RANGE_THRESHOLD) {
 		if (from == ControlId::Button0) {
 			nextApplication();
-			return;
 		} else if (from == ControlId::Button1) {
 			prevApplication();
-			return;
 		}
+		return;
 	}
 	eventDispatch(now, from, EventId::KeyDownEvent);
 }
 
 void KMProcessor::onKeyUp(ControlId from, uint32_t now) {
+	if (_currentRangingState < RANGE_THRESHOLD)
+		return;
 	eventDispatch(now, from, EventId::KeyUpEvent);
 }
 
 void KMProcessor::onKeyInput(ControlId from, uint32_t now) {
+	if (_currentRangingState < RANGE_THRESHOLD)
+		return;
 	eventDispatch(now, from, EventId::KeyInputEvent);
 }
 
 void KMProcessor::onKeyLongPress(ControlId from, uint32_t now) {
+	if (_currentRangingState < RANGE_THRESHOLD)
+		return;
 	eventDispatch(now, from, EventId::LongPressEvent);
 }
 
@@ -747,8 +752,6 @@ void KMProcessor::onEnter(ControlId from, uint32_t now) {
 
 void KMProcessor::onLeave(ControlId from, uint32_t now) {
 	VisualManager::showLed();
-//	VisualManager::applyImmideate();
-//	_needVisualApply = false;
 	eventDispatch(now, from, EventId::LeaveEvent);
 }
 
