@@ -5,7 +5,7 @@
 #ifndef INC_AERGIA_CONFIG_H
 #define INC_AERGIA_CONFIG_H
 
-#define VERSION "1.0.3"
+#define VERSION "1.0.4"
 
 #define DEVICE_TYPE		"Aergia"
 
