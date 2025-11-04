@@ -87,7 +87,7 @@ Processor::Processor()
 	}
 }
 
-void Processor:: log(const char *text)
+void Processor::log(const char *text)
 {
 	ScreenGFX *screen = DisplayController::selectScreen(0);
 	screen->gfx->fillRect(14,106,212,38,0);
@@ -151,7 +151,6 @@ void Processor::backgroundScanProcess()
 
         __atomic_store_n(&_currentButtonState,ButtonController::scan(now), __ATOMIC_RELAXED);
         __atomic_store_n(&_currentKeyState, KeyboardController::scan(now), __ATOMIC_RELAXED);
-        __atomic_store_n(&_currentWheelDelta, WheelController::scan(now), __ATOMIC_RELAXED);
     }
 }
 
@@ -206,7 +205,7 @@ void Processor::process(uint32_t now) {
 
 	uint8_t currentButtonState = __atomic_load_n(&_currentButtonState, __ATOMIC_RELAXED);
     uint16_t currentKeyState = __atomic_load_n(&_currentKeyState, __ATOMIC_RELAXED);
-    int8_t currentWheelDelta =  __atomic_load_n(&_currentWheelDelta, __ATOMIC_RELAXED);
+	_currentWheelDelta = WheelController::scan(now);
 #if defined(JOYSTICK_CONTROLLER)
 	uint8_t joystickFlag = JoystickController::scan(now);
 #endif
@@ -307,24 +306,22 @@ void Processor::process(uint32_t now) {
 		}
 		_lastKeyState = currentKeyState;
 	}
-	if(currentWheelDelta != _lastWheelDelta && currentWheelDelta != 0) {
-		if(!_currentWheelState) {
-			onWheelBegin(ControlId::Wheel, now, currentWheelDelta);
-			_currentWheelState = true;
-		}
-		onWheel(ControlId::Wheel, now, currentWheelDelta);
-		eventFired = true;
-		_lastWheelTime = now;
-		_lastWheelDelta = currentWheelDelta;
-	}
-	else if(_currentWheelState) {
-//		if(now - _lastWheelTime > 800000L) {
-			onWheelEnd(ControlId::Wheel, now, currentWheelDelta);
+	if(_currentWheelDelta != _lastWheelDelta ) {
+		if (_currentWheelDelta != 0) {
+			if (!_currentWheelState) {
+				onWheelBegin(ControlId::Wheel, now, _currentWheelDelta);
+				_currentWheelState = true;
+			}
+			onWheel(ControlId::Wheel, now, _currentWheelDelta);
+			eventFired = true;
+			_lastWheelTime = now;
+		} else if (_currentWheelState) {
+			onWheelEnd(ControlId::Wheel, now, _currentWheelDelta);
 			eventFired = true;
 			_lastWheelTime = now;
 			_currentWheelState = false;
-			_lastWheelDelta = currentWheelDelta;
-//		}
+		}
+		_lastWheelDelta = _currentWheelDelta;
 	}
 
 	if(_currentRangingState < RANGE_THRESHOLD) {
